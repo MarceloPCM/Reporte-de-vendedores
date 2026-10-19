@@ -366,7 +366,7 @@ document.querySelectorAll('#nav .pill-btn').forEach(b=>b.onclick=()=>selectV(b.d
   sel.addEventListener('change',sync);
   window.addEventListener('hashchange',sync);
   
-  const _sel=window.selectV;
+  const _sel=selectV;
   window.selectV=function(id){
       _sel(id);
       sel.value=id;
