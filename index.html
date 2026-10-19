@@ -80,11 +80,36 @@ tr.det>td{background:var(--neutral-bg);padding:12px 14px}.detbox{display:flex;fl
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--muted)}
 #oct{border:1px solid var(--line);border-radius:8px;padding:16px;background:var(--surface)}
 #oct .card{background:var(--bg)}
+
+/* === Selector móvil de vendedor === */
+#navSel{display:none}
+@media (max-width:640px){
+  #nav{display:none}                 /* oculta la barra completa en móvil */
+  #navSel{
+    display:flex;align-items:center;gap:8px;
+    position:sticky;top:env(safe-area-inset-top,0px);z-index:6;
+    background:var(--bg);border-bottom:1px solid var(--line);
+    padding:8px 0;margin-bottom:4px
+  }
+  #navSel label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.03em}
+  #navSel select{
+    flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);
+    border-radius:8px;background:var(--surface);color:var(--ink);
+    font-weight:600;font-size:14px
+  }
+  #navSel .dot{width:10px;height:10px;flex:none}
+  header{align-items:flex-start}
+  h1{font-size:26px}
+}
 </style>
 
-<div class="wrap"><nav id="nav" aria-label="Vendedores"></nav>
-<header><div><div class="eyebrow">Cartera por vendedor</div><h1 id="nm"></h1></div><div class="asof" id="asof"></div></header>
-
+<div class="wrap">
+  <div id="navSel" aria-label="Selector de vendedor">
+    <span class="dot" id="navSelDot"></span>
+    <label for="navSelect">Vendedor</label>
+    <select id="navSelect"></select>
+  </div>
+  <nav id="nav" aria-label="Vendedores"></nav>
 <section id="oct" aria-label="Corte del mes en curso">
   <div class="row-h"><div><div class="eyebrow">Corte del mes en curso</div><h2 id="oTitle"></h2><p class="sub" id="oSub"></p></div><div id="oVerdict"></div></div>
   <div class="kpis" id="oKpis"></div>
@@ -320,9 +345,37 @@ function selectV(id){
   document.querySelectorAll('#nav .pill-btn').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===id));
   mount(DATA[id]);mountOct(DATA[id]);window.scrollTo({top:0});
 }
-$('#nav').innerHTML=ALL.map(v=>`<button class="pill-btn" data-id="${v.id}" aria-pressed="false"><span class="dot" style="background:${dotc(v.var)}"></span>${esc(v.n)} <small>${v.var==null?'':pct(v.var)}</small></button>`).join('');
-document.querySelectorAll('#nav .pill-btn').forEach(b=>b.onclick=()=>selectV(b.dataset.id));
-const h=(location.hash||'').slice(1);selectV(DATA[h]?h:ALL[0].id);
-</script>
 
+  $('#nav').innerHTML=ALL.map(v=>`<button class="pill-btn" data-id="${v.id}" aria-pressed="false"><span class="dot" style="background:${dotc(v.var)}"></span>${esc(v.n)} <small>${v.var==null?'':pct(v.var)}</small></button>`).join('');
+document.querySelectorAll('#nav .pill-btn').forEach(b=>b.onclick=()=>selectV(b.dataset.id));
+(function(){
+  const sel=document.getElementById('navSelect');
+  const dot=document.getElementById('navSelDot');
+  if(!sel) return;
+  
+  sel.innerHTML=ALL.map(v=>`<option value="${v.id}">${esc(v.n)}${v.var==null?'':' · '+pct(v.var)}</option>`).join('');
+  sel.onchange=()=>selectV(sel.value);
+  
+  const sync=()=>{
+    const cur=(location.hash||'').slice(1);
+    if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+    const v=ALL.find(x=>x.id===sel.value);
+    if(v&&dot) dot.style.background=dotc(v.var);
+  };
+  
+  sel.addEventListener('change',sync);
+  window.addEventListener('hashchange',sync);
+  
+  const _sel=window.selectV;
+  window.selectV=function(id){
+      _sel(id);
+      sel.value=id;
+      const v=ALL.find(x=>x.id===id);
+      if(v&&dot) dot.style.background=dotc(v.var);
+  };
+  sync();
+})();
+  const h=(location.hash||'').slice(1);selectV(DATA[h]?h:ALL[0].id);
+</script>
+ 
 </body></html>
